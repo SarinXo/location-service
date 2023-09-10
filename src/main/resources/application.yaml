@@ -1,6 +1,11 @@
 spring:
   application:
     name: location-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:h2:file:./data/location
 
 eureka:
   client:
@@ -8,4 +13,4 @@ eureka:
       defaultZone: http://localhost:8888/eureka/
 
 server:
-  port: 8081
+  port: 8083
