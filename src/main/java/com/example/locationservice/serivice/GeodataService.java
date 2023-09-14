@@ -1,4 +1,4 @@
-package com.example.locationservice;
+package com.example.locationservice.serivice;
 
 import com.example.locationservice.entity.Geodata;
 import com.example.locationservice.repository.GeodataRepository;
@@ -22,11 +22,11 @@ public class GeodataService {
         return repository.findByName(location);
     }
 
-    public Geodata pushInDb(Geodata geodata) {
-        Optional<Geodata> findGeodata = repository.findById(geodata.getId());
+    public Optional<Geodata> pushInDb(Geodata geodata) {
+        Optional<Geodata> findGeodata = repository.findByName(geodata.getName());
         if(findGeodata.isEmpty())
-            repository.save(geodata);
-        return findGeodata.orElse(geodata);
+            return Optional.of(repository.save(geodata));
+        return Optional.empty();
     }
 
 }
