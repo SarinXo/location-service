@@ -1,17 +1,13 @@
 package com.example.locationservice.controller;
 
-import com.example.locationservice.model.Weather.submodules.Coord;
+
+import com.example.locationservice.model.Weather.submodules.Main;
 import com.example.locationservice.serivice.GeodataService;
 import com.example.locationservice.entity.Geodata;
 import com.example.locationservice.model.Weather.Weather;
-import org.bouncycastle.oer.its.etsi102941.Url;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +25,7 @@ import java.util.Optional;
 @RestController
 public class LocationController {
 
-    private final String WEATHER_URL;
+    private final String weatherUrl;
 
     private final GeodataService service;
 
@@ -41,25 +37,34 @@ public class LocationController {
                               RestTemplate externalRestTemplate) {
         this.service = service;
         this.externalRestTemplate = externalRestTemplate;
-        WEATHER_URL = weatherUrl;
+        this.weatherUrl = weatherUrl;
     }
 
     @GetMapping("/weather")
     public ResponseEntity<Weather> redirectRequestToWeather(@RequestParam String location) {
         try{
-            Optional<Geodata> geodata = service.findByName(location);
-            Geodata eGeodata = geodata.get();
+            Geodata geodata = service.findByName(location).get();
             URI url = new URI(String.format("%s/weather/lat=%s&lon=%s",
-                    WEATHER_URL, eGeodata.getLat(), eGeodata.getLon()));
-            return externalRestTemplate.getForEntity(
-                    url,
-                    Weather.class);
+                    weatherUrl, geodata.getLat(), geodata.getLon()));
+            return externalRestTemplate.getForEntity(url, Weather.class);
+
         }catch (NoSuchElementException e){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }catch (RestClientException e){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @GetMapping("/weather/main")
+    public ResponseEntity<Main> getMain(@RequestParam String location) {
+        try{
+            return new ResponseEntity<>(redirectRequestToWeather(location).getBody().getMain(), HttpStatus.OK);
+        }catch (NoSuchElementException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }catch (RestClientException e){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
